@@ -1,0 +1,58 @@
+version: "3.3"
+
+networks:
+  vk-net:
+
+services:
+
+  vk-server:
+    build: 
+      context: ./vk_app_server
+      dockerfile: Dockerfile.dev
+    ports:
+      - 9000:9000
+    networks:
+      - vk-net
+    environment:
+      - FORM_API_URL=http://form_api:8080
+    volumes:
+      - ./vk_app_server/src:/usr/app/src
+    build: 
+      context: ./vk_app_server
+      dockerfile: Dockerfile.dev
+    environment:
+      PORT: 9000
+      TYPEORM_HOST: vk-app
+      TYPEORM_USERNAME: developer
+      TYPEORM_PASSWORD: developer
+      TYPEORM_DATABASE: database
+      TYPEORM_MIGRATIONS_DIR: dist/migration
+      TYPEORM_MIGRATIONS_TABLE_NAME: migration
+    ports:
+      - 9000:9000
+    networks:
+      - vk-net
+    depends_on:
+      - vk-db
+
+  vk-front:
+    build:
+      context: ./vk_app_front
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./vk_app_front/src:/usr/app/src
+    ports:
+      - 3000:3000
+
+  vk-db:
+    image: postgres:11.5
+    volumes:
+      - ./db/vk-db/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: database
+      POSTGRES_USER: developer
+      POSTGRES_PASSWORD: developer
+    ports:
+      - 5445:5432
+    networks:
+      - search-engine-net
